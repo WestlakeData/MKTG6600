@@ -1,6 +1,6 @@
 ---
-title: "6600: Project Submission template"
-
+title: "Case Study: MovieMagic Concessions and User Review Statistical Analysis"
+author: "Brian Burdick, Chris Gearheart and Chris Porter"
 
 output:
   html_document: default
