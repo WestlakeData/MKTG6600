@@ -29,7 +29,8 @@ sales.
 
 
 ```{r linear regression, warning=FALSE, message=FALSE}
-
+model1<- lm(amount_spent~., data=data)
+summary(model1) # will give output for each level of each categorical predictor
 
 ```
 
