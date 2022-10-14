@@ -1,0 +1,39 @@
+---
+title: "6600: Project Submission template"
+
+
+output:
+  html_document: default
+  pdf_document: default
+---
+##  This is a template. 
+
+**Regression analysis**
+
+
+```{r, warning=FALSE, message=FALSE}
+
+
+```
+
+**Penalized Regression**
+
+```{r, warning=FALSE, message=FALSE}
+
+
+```
+
+
+**Predictive model**
+The analysis was run by splitting the data........
+```{r, warning=FALSE, message=FALSE}
+
+
+```
+
+**Text Analysis**
+
+```{r, warning=FALSE, message=FALSE}
+
+
+```
