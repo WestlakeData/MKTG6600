@@ -22,13 +22,14 @@ increase spending on concessions. It has collected information of 2000 of its cu
 some of whom are part of their loyalty program and some who are not. They have
 information on 8 variables, which they plan to use as predictors. They
 plan to use the amount spent on concessions as the outcome variable
-since they have learnt from observation that much of their profit is derived from concession
+since they have learned from observation that much of their profit is derived from concession
 sales.
 
 **Regression analysis**
 
 
 ```{r linear regression, warning=FALSE, message=FALSE}
+#head(data)
 model1<- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor
 

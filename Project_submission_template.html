@@ -373,6 +373,21 @@ plan to use the amount spent on concessions as the outcome variable
 since they have learnt from observation that much of their profit is
 derived from concession sales.</p>
 <p><strong>Regression analysis</strong></p>
+<pre class="r"><code>head(data)</code></pre>
+<pre><code>##   age          job streaming education seen_alone discount days_member
+## 1  58   management         4  tertiary         no      yes         261
+## 2  44   technician         3 secondary         no      yes         151
+## 3  33 entrepreneur         4 secondary         no      yes          76
+## 4  47   industrial         4   unknown         no      yes          92
+## 5  33      unknown         3   unknown         no       no         198
+## 6  35   management         4  tertiary         no      yes         139
+##   movies_seen amount_spent
+## 1           1     43.70340
+## 2           1     29.28297
+## 3           1     16.26918
+## 4           1     23.37933
+## 5           1     40.13882
+## 6           1     18.69009</code></pre>
 <pre class="r"><code>model1&lt;- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor</code></pre>
 <pre><code>## 
