@@ -364,32 +364,16 @@ Review Statistical Analysis</h1>
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>A movie chain in the southwest region, <em>MovieMagic</em>, is
-considering ways in which it can increase spending on concessions. It
-has collected information of 2000 of its customers, some of whom are
-part of their loyalty program and some who are not. They have
-information on 8 variables, which they plan to use as predictors. They
-plan to use the amount spent on concessions as the outcome variable
-since they have learnt from observation that much of their profit is
-derived from concession sales.</p>
-<p><strong>Regression analysis</strong></p>
-<pre class="r"><code>head(data)</code></pre>
-<pre><code>##   age          job streaming education seen_alone discount days_member
-## 1  58   management         4  tertiary         no      yes         261
-## 2  44   technician         3 secondary         no      yes         151
-## 3  33 entrepreneur         4 secondary         no      yes          76
-## 4  47   industrial         4   unknown         no      yes          92
-## 5  33      unknown         3   unknown         no       no         198
-## 6  35   management         4  tertiary         no      yes         139
-##   movies_seen amount_spent
-## 1           1     43.70340
-## 2           1     29.28297
-## 3           1     16.26918
-## 4           1     23.37933
-## 5           1     40.13882
-## 6           1     18.69009</code></pre>
-<pre class="r"><code>model1&lt;- lm(amount_spent~., data=data)
-summary(model1) # will give output for each level of each categorical predictor</code></pre>
+<p><em>MovieMagic</em>, is a regional movie chain operating in the
+Southwest region of the US. They are considering ways in which they can
+increase spending on concessions. MovieMagic has collected information
+about 2000 of its customers, some of whom are part of their loyalty
+program and some who are not. They have information on 8 variables,
+which they plan to use as predictors. They plan to use the amount spent
+on concessions as the outcome variable since they have learned from
+observation that much of their profit is derived from concession
+sales.</p>
+<p><strong>Regression Analysis</strong></p>
 <pre><code>## 
 ## Call:
 ## lm(formula = amount_spent ~ ., data = data)
@@ -427,7 +411,41 @@ summary(model1) # will give output for each level of each categorical predictor<
 ## Residual standard error: 9.662 on 1979 degrees of freedom
 ## Multiple R-squared:  0.6378, Adjusted R-squared:  0.6341 
 ## F-statistic: 174.2 on 20 and 1979 DF,  p-value: &lt; 2.2e-16</code></pre>
-<p><strong>Penalized Regression</strong></p>
+<p>Based upon linear regression analysis, we are able to identify age,
+streaming, days_member and movies_seen as the significant predictors (p
+&lt;0.05) of amount spent on concessions.
+<!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. --></p>
+<p>Of the signficant independent variables, <em>age</em>,
+<em>days_member</em> and <em>movies_seen</em> all display a positive
+influence on the outcome variable <em>amount_spent</em> meaning that for
+every increase in these variables, it is predicted that the amount spent
+on concession will also increase. The only significant predictor
+variable to display a negative influence is <em>streaming</em> which
+shows a remarkably strong negative influence when compared with the
+other predictor variables. Therefore any increase in this variable will
+strongly decrease the <em>amount_spent</em> outcome variable. This was
+determined using a linear regression. To determine whether a penalized
+regression analysis would further inform this, we need to determine to
+what extent the independent variables are correlated. As with any data
+set of seemingly independent variables, the possibility exists that the
+independent variables are not in fact independent. To determine this we
+check for multicollinearity.</p>
+<p><em>Multicollinear Analysis</em></p>
+<p>The primary test for mulitcollinearity is to calculate the Variance
+Inflation Factor (VIF) for each independent variable.</p>
+<pre><code>##                 GVIF Df GVIF^(1/(2*Df))
+## age         1.192316  1        1.091932
+## job         2.551815 11        1.043502
+## streaming   1.040355  1        1.019978
+## education   2.296708  3        1.148641
+## seen_alone  1.007720  1        1.003852
+## discount    1.028988  1        1.014390
+## days_member 1.060568  1        1.029839
+## movies_seen 1.065285  1        1.032127</code></pre>
+<p>None of the variables display a high degree of multicollinearity (VIF
+&gt; 5). As such, no measures are required to address multicollinearity
+in the model.</p>
+<p><strong>Penalized Regression Analysis</strong></p>
 <p><strong>Predictive model</strong> The analysis was run by splitting
 the data……..</p>
 <p><strong>Text Analysis</strong></p>

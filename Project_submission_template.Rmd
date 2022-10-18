@@ -9,6 +9,9 @@ output:
 ```{r setup, include= FALSE}
 # Install Libraries
 library(dplyr)
+library(psycho)
+library(car)
+library(knitr)
 
 # Load project data
 data <- read.csv("http://data.mishra.us/files/project_data.csv")
@@ -17,25 +20,42 @@ text <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
 
 ##  Introduction
 
-A movie chain in the southwest region, *MovieMagic*, is considering ways in which it can
-increase spending on concessions. It has collected information of 2000 of its customers,
-some of whom are part of their loyalty program and some who are not. They have
-information on 8 variables, which they plan to use as predictors. They
-plan to use the amount spent on concessions as the outcome variable
-since they have learned from observation that much of their profit is derived from concession
-sales.
+*MovieMagic*, is a regional movie chain operating in the Southwest region of the US.  They are considering ways in which they can
+increase spending on concessions. MovieMagic has collected information about 2000 of its customers, some of whom are part of their loyalty program and some who are not. They have information on 8 variables, which they plan to use as predictors. They plan to use the amount spent on concessions as the outcome variable
+since they have learned from observation that much of their profit is derived from concession sales.
 
-**Regression analysis**
+**Regression Analysis**
 
 
-```{r linear regression, warning=FALSE, message=FALSE}
+```{r linear regression, echo= FALSE, warning=FALSE, message=FALSE}
 #head(data)
 model1<- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor
 
-```
+#model2 <- aov(amount_spent~., data = data)
+#summary(model2)
 
-**Penalized Regression**
+```
+Based upon linear regression analysis, we are able to identify age, streaming, days_member and movies_seen as the significant predictors (p <0.05) of amount spent on concessions.  <!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. -->
+
+```{r LM refinement, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
+modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data=data)
+summary(modelLM)
+
+```
+Of the signficant independent variables, *age*, *days_member* and *movies_seen* all display a positive influence on the outcome variable *amount_spent* meaning that for every increase in these variables, it is predicted that the amount spent on concession will also increase.  The only significant predictor variable to display a negative influence is *streaming* which shows a remarkably strong negative influence when compared with the other predictor variables.  Therefore any increase in this variable will strongly decrease the *amount_spent* outcome variable.  This was determined using a linear regression. To determine whether a penalized regression analysis would further inform this, we need to determine to what extent the independent variables are correlated.  As with any data set of seemingly independent variables, the possibility exists that the independent variables are not in fact independent.  To determine this we check for multicollinearity.
+
+*Multicollinear Analysis*
+
+The primary test for mulitcollinearity is to calculate the Variance Inflation Factor (VIF) for each independent variable.
+
+```{r VIF, echo=FALSE, warning=FALSE, message=FALSE}
+vif(model1)
+#vif(modelLM)
+```
+None of the variables display a high degree of multicollinearity (VIF > 5).  As such, no measures are required to address multicollinearity in the model.
+
+**Penalized Regression Analysis**
 
 ```{r, warning=FALSE, message=FALSE}
 
