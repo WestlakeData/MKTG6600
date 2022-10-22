@@ -72,6 +72,119 @@ The analysis was run by splitting the data........
 
 **Text Analysis**
 
+Question 6
+MovieMagic wants to visualize the reviews through a wordcloud and wants to find
+out which words are used most commonly in the reviews that customers write for
+MovieMagic. Create 2 wordclouds - one for reviews that received 3, 4, or 5 star
+ratings and another with reviews that received 1 or 2 stars ratings. Knowing the
+prominent words in each of the wordclouds, what strategies can be developed in
+messaging customers? Would the strategies differ?
+
+Answer: 
+"The strategies will differ greatly because the negative group is damage control messaging and the 
+positive group is reminding them of why they loved going to the movie.  
+
+Positive Reviews
+The three most common words are Great, Movie, and Food.  Based on the top three most common words 
+customers enjoyed the movies and food that was offered.  A few strategies that we would suggest 
+focusing on are. Communication around new movies coming out and seasonal concession treats with images. 
+Ideally if name and card information could be tied to what they purchased at the concession stand maybe 
+a bogo could be offered to this group.  We would also like to conduct additional analysis to see what 
+messaging is more effective i.e. new movie + concession bogo, new movie, new movie + discounted popcorn 
+etc.  We would want to get this dialed in to see which is more effective.
+
+Negative Reviews
+The three most common words are Hour, Food, and Like.  Based on the word cloud the service was slow 
+and took around an hour to get their food.  The negative reviews sound like they need internal strategies 
+more than external ones.  Perhaps the theater concessions are under staffed, poorly organized, or has 
+inefficient processes.  This could be focus area for the theaters manager to improve for their customers.
+A time study could be completed on various nights to see the length of time it takes for people to get 
+their food.  Once that number has been improved messaging to this group could be around the improvements 
+in the speed of service. "
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(topicmodels)
+library(ggplot2)
+library(dplyr)
+library(tidytext)
+library(tidyr)
+library(RTextTools)
+library(wordcloud)
+library(tm)
+library(stringr)
+
+reviews <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
+
+#Positive Word Cloud
+
+Positive_Reviews <- filter(reviews,star >= 3)
+
+Review_corpus_p <- VCorpus(VectorSource(Positive_Reviews$text))
+
+Review_corpus_p <- tm_map(Review_corpus_p, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+Review_corpus_p <- tm_map(Review_corpus_p, removeWords, stopwords(kind="en")) # remove stop words
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+Review_corpus_p <- tm_map(Review_corpus_p, func_Space, "/|@|\\|")
+Review_corpus_p <- tm_map(Review_corpus_p, stripWhitespace) # remove white space
+Review_corpus_p <- tm_map(Review_corpus_p, removeNumbers) # remove numeric values
+Review_corpus_p <- tm_map(Review_corpus_p, removePunctuation) # remove punctuations
+
+dtm_review <- TermDocumentMatrix(Review_corpus_p)
+
+m <- as.matrix(dtm_review)
+v <- sort(rowSums(m),decreasing=TRUE)
+review_final <- data.frame(word = names(v),freq=v)
+
+set.seed(1234)
+wordcloud(words = review_final$word, freq = review_final$freq, min.freq = 2,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"),scale=c(3, 0.7))
+
+##Negative Word Cloud
+
+Negative_Reviews <- filter(reviews,star < 3)
+
+Review_corpus_n <- VCorpus(VectorSource(Negative_Reviews$text))
+
+Review_corpus_n <- tm_map(Review_corpus_n, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+
+Review_corpus_n <- tm_map(Review_corpus_n, removeWords, stopwords(kind="en")) # if we remove stopwords the wordcloud becomes sparse. 
+# Run with and without stop words to see how word cloud changes
+
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+Review_corpus_n <- tm_map(Review_corpus_n, func_Space, "/|@|\\|")
+Review_corpus_n <- tm_map(Review_corpus_n, stripWhitespace) # remove white space
+Review_corpus_n <- tm_map(Review_corpus_n, removeNumbers) # remove numbers
+Review_corpus_n <- tm_map(Review_corpus_n, removePunctuation) # remove punctuations
+
+
+dtm_review_n <- TermDocumentMatrix(Review_corpus_n)
+
+m_n <- as.matrix(dtm_review_n )
+v_n <- sort(rowSums(m_n),decreasing=TRUE)
+review_final_n <- data.frame(word = names(v_n),freq=v_n)
+
+set.seed(1234)
+wordcloud(words = review_final_n$word, freq = review_final_n$freq, min.freq = 1,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"),scale=c(3, .5))
+
+
+7. MovieMagic also wants to use topic modeling to find out whether the content in
+the reviews could be categorized into specific topics.
+
+If you used LDA to create 3 topic groups (k = 3), MovieMagic wants you to use the words within the 3 topics to
+infer topic title. 
+Which term is the most relevant in each of the three topics and
+how would it inform your business strategy? 
+
+Given the topics you inferred what
+strategies would you suggest are possible for MovieMagic if it wants to increase con-
+cession sales. Would you recommend promotions or advertising or loyalty program;
+justify your choice of business strategy?
+
+
 ```{r, warning=FALSE, message=FALSE}
 
 
