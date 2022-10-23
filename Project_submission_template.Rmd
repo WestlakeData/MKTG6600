@@ -176,20 +176,91 @@ wordcloud(words = review_final_n$word, freq = review_final_n$freq, min.freq = 1,
 ```
 
 7. MovieMagic also wants to use topic modeling to find out whether the content in
-the reviews could be categorized into specific topics.
+the reviews could be categorized into specific topics. If you used LDA to create 3 topic groups (k = 3), MovieMagic wants you to use 
+the words within the 3 topics to infer topic title.  Which term is the most relevant in each of the three topics and how would it inform your 
+business strategy? Given the topics you inferred what strategies would you suggest are possible for MovieMagic if it wants to increase con-
+cession sales. Would you recommend promotions or advertising or loyalty program; justify your choice of business strategy?
 
-If you used LDA to create 3 topic groups (k = 3), MovieMagic wants you to use the words within the 3 topics to
-infer topic title. 
-Which term is the most relevant in each of the three topics and
-how would it inform your business strategy? 
+Answer
 
-Given the topics you inferred what
-strategies would you suggest are possible for MovieMagic if it wants to increase con-
-cession sales. Would you recommend promotions or advertising or loyalty program;
-justify your choice of business strategy?
+Topic 1 
+Title: Concessions
+Top Word: Food
+Top 3 words: Food, Fun, Cinema
+Strategy: We would create a loyalty program so that we could gain additional insight into our customer base.  Once we have a large enough sample, we would utilize a clustering technique to identify common characteristics across our most lucrative segments and then cater promotions and advertising to them. This loyalty card could tie to what they purchase at concessions and what movies they tend to see.
+
+Topic 2 
+Title: Experience
+Top Word: Movie
+Top 3 words: Movie, Great, Place
+
+Strategy: I would utilize the information from the loyalty card program to segment which customers would want to watch what movie and then push adds to those people.  This is the first action we need our customers to take during the customer journey so ideally it will resort in concession stand sales. Our customers come for the experience and the movie so perhaps additional analysis could be done to see who they are sharing the experience with.  If it is a group of friends going maybe offer a discount for 6 or more people. If it is a date night maybe offer a date night package with two tickets, drinks, and popcorn.  A couple of these concepts could be tested to see what customers respond to.  If we can increase the average group size and the frequency of people going to the movies concessions should follow.  
+
+Topic 3 
+Title: Random Words
+Top Word: Just
+Top 3 words: Just, Like, Guest
+
+Strategy: Nothing emerged out of this topic to act upon.  Perplexity for three topics was lower then two topics which means three topics was better for our LDA model.  However, although the perplexity score for three topics was better, I would have preferred to keep this at two topics since the third topic did not provide any real value.
 
 
 ```{r, warning=FALSE, message=FALSE}
+library(reshape2)
+library(tidyverse)
+library(topicmodels)
+library(ggplot2)
+library(dplyr)
+library(tidytext)
+library(tidyr)
+library(RTextTools)
+library(wordcloud)
+library(tm)
+library(stringr)
 
+ 
+## Topic model LDA 
+
+reviews_LDA <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
+
+LDA_corpus <- VCorpus(VectorSource(reviews_LDA$text)) #create corpus
+
+#Preprocessing
+
+LDA_corpus <- tm_map(LDA_corpus, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+LDA_corpus <- tm_map(LDA_corpus, removeWords, stopwords(kind="en")) # remove stop words
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+LDA_corpus <- tm_map(LDA_corpus, func_Space, "/|@|\\|")
+LDA_corpus <- tm_map(LDA_corpus, stripWhitespace) # remove white space
+LDA_corpus <- tm_map(LDA_corpus, removeNumbers) # remove numeric values
+LDA_corpus <- tm_map(LDA_corpus, removePunctuation) # remove punctuation
+
+
+LDA_dtm <- DocumentTermMatrix(LDA_corpus) #create a DTM
+
+
+rowTotals <- apply(LDA_dtm , 1, sum) #sum of words
+LDA_dtm   <- LDA_dtm [rowTotals> 0, ] # removed rows with no words 
+
+set.seed(123)
+lda_topic <- LDA(LDA_dtm, k = 3, method = "Gibbs", control = NULL) # 3 LDA topics
+LDA_topic_model <- tidy(lda_topic, matrix = "beta") 
+
+top_terms <- LDA_topic_model %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>% # 10 terms
+  ungroup() %>%
+  arrange(topic, -beta)
+
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+
+# perplexity calculation - change k = values
+lda <- LDA(LDA_dtm, k = 2, control = NULL) 
+perplexity(lda)
 
 ```
