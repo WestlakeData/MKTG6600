@@ -11,14 +11,14 @@ output:
 library(dplyr)
 library(psycho)
 library(car)
-library(caret)
+#library(caret)
 library(knitr)
 
 # Load project data
 data <- read.csv("http://data.mishra.us/files/project_data.csv")
-datasplit <- createDataPartition(data$amount_spent, p = 0.7, list=FALSE)
-trainData <- data[datasplit,]
-testData <- data[-datasplit,]
+#datasplit <- createDataPartition(data$amount_spent, p = 0.7, list=FALSE)
+#trainData <- data[datasplit,]
+#testData <- data[-datasplit,]
 text <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
 ```
 
@@ -33,7 +33,7 @@ since they have learned from observation that much of their profit is derived fr
 
 ```{r linear regression, echo= FALSE, warning=FALSE, message=FALSE}
 #head(data)
-model1<- lm(amount_spent~., data=trainData)
+model1<- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor
 
 #model2 <- aov(amount_spent~., data = data)
@@ -43,7 +43,7 @@ summary(model1) # will give output for each level of each categorical predictor
 Based upon linear regression analysis, we are able to identify age, streaming, days_member and movies_seen as the significant predictors (p <0.05) of amount spent on concessions.  <!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. -->
 
 ```{r LM refinement, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
-modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data=trainData)
+modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data= data)
 summary(modelLM)
 
 ```
