@@ -173,7 +173,7 @@ set.seed(1234)
 wordcloud(words = review_final_n$word, freq = review_final_n$freq, min.freq = 1,
           max.words=50, random.order=FALSE, rot.per=0.35, 
           colors=brewer.pal(8, "Dark2"),scale=c(3, .5))
-
+```
 
 7. MovieMagic also wants to use topic modeling to find out whether the content in
 the reviews could be categorized into specific topics.
