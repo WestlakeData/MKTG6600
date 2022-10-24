@@ -8,7 +8,8 @@ output:
 ---
 ```{r setup, include= FALSE}
 # Install Libraries
-library(dplyr)
+library(tidyverse)
+#library(dplyr)
 library(psycho)
 library(car)
 #library(caret)
@@ -107,16 +108,16 @@ their food.  Once that number has been improved messaging to this group could be
 in the speed of service. "
 
 ```{r, warning=FALSE, message=FALSE}
-library(tidyverse)
+#library(tidyverse)
 library(topicmodels)
-library(ggplot2)
-library(dplyr)
-library(tidytext)
-library(tidyr)
+#library(ggplot2)
+#library(dplyr)
+#library(tidytext)
+#library(tidyr)
 library(RTextTools)
 library(wordcloud)
 library(tm)
-library(stringr)
+#library(stringr)
 
 reviews <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
 
