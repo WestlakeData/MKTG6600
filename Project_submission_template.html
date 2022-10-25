@@ -374,8 +374,7 @@ on concessions as the outcome variable since they have learned from
 observation that much of their profit is derived from concession
 sales.</p>
 <p><strong>Regression Analysis</strong></p>
-<pre class="r"><code>#head(data)
-model1&lt;- lm(amount_spent~., data=data)
+<pre class="r"><code>model1&lt;- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor</code></pre>
 <pre><code>## 
 ## Call:
@@ -414,27 +413,15 @@ summary(model1) # will give output for each level of each categorical predictor<
 ## Residual standard error: 9.662 on 1979 degrees of freedom
 ## Multiple R-squared:  0.6378, Adjusted R-squared:  0.6341 
 ## F-statistic: 174.2 on 20 and 1979 DF,  p-value: &lt; 2.2e-16</code></pre>
-<pre class="r"><code>#model2 &lt;- aov(amount_spent~., data = data)
-#summary(model2)</code></pre>
+<p>Q1 Of the 8 predictors, which predictors have a significant influence
+on amount spent on concessions? Which predictors are multicollinear?
+Justify your response with reasons from the analysis.</p>
 <p>Based upon linear regression analysis, we are able to identify age,
 streaming, days_member and movies_seen as the significant predictors (p
-&lt;0.05) of amount spent on concessions.
-<!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. --></p>
-<p>Of the signficant independent variables, <em>age</em>,
-<em>days_member</em> and <em>movies_seen</em> all display a positive
-influence on the outcome variable <em>amount_spent</em> meaning that for
-every increase in these variables, it is predicted that the amount spent
-on concession will also increase. The only significant predictor
-variable to display a negative influence is <em>streaming</em> which
-shows a remarkably strong negative influence when compared with the
-other predictor variables. Therefore any increase in this variable will
-strongly decrease the <em>amount_spent</em> outcome variable. This was
-determined using a linear regression. To determine whether a penalized
-regression analysis would further inform this, we need to determine to
-what extent the independent variables are correlated. As with any data
-set of seemingly independent variables, the possibility exists that the
-independent variables are not in fact independent. To determine this we
-check for multicollinearity.</p>
+&lt;0.05) of amount spent on concessions. Upon eliminating
+non-significant predictor variables, we see that the model continues to
+explain a similar amount of the variation (MRS 0.6738 -&gt; 0.635), so
+little loss of information has occurred.</p>
 <p><em>Multicollinear Analysis</em></p>
 <p>The primary test for mulitcollinearity is to calculate the Variance
 Inflation Factor (VIF) for each independent variable.</p>
@@ -448,12 +435,33 @@ Inflation Factor (VIF) for each independent variable.</p>
 ## discount    1.028988  1        1.014390
 ## days_member 1.060568  1        1.029839
 ## movies_seen 1.065285  1        1.032127</code></pre>
-<pre class="r"><code>#vif(modelLM)</code></pre>
 <p>None of the variables display a high degree of multicollinearity (VIF
 &gt; 5). As such, no measures are required to address multicollinearity
 in the model.</p>
-<div id="strategies-to-increase-concessions-spending" class="section level3">
-<h3>Strategies to increase concessions spending</h3>
+<p>Q2 Which predictors have a positive influence and which predictors
+have a negative influence on the amount spent on concessions? Which
+analysis, regression or penalized regression, helped you answer this
+question? If you ran a neural net model, can it help you find the
+significant (or not) predictors and their magnitude and direction of
+influence on the outcome?</p>
+<p>Of the significant independent variables, <em>age</em>,
+<em>days_member</em> and <em>movies_seen</em> all display a positive
+influence on the outcome variable <em>amount_spent</em> meaning that for
+every increase in these variables, it is predicted that the amount spent
+on concession will also increase. The only significant predictor
+variable to display a negative influence is <em>streaming</em> which
+shows a remarkably strong negative influence when compared with the
+other predictor variables. Therefore any increase in this variable will
+strongly decrease the <em>amount_spent</em> outcome variable. This was
+determined using a linear regression. Based upon the low levels of
+multicollinearity observed above, penalized regression would not yield
+significantly different results. Use of a neural net model would give us
+weights, but due to the characteristics of a neural net model, we would
+no be able to determine the direction or magnitude of any independent
+variables effect.</p>
+</div>
+<div id="strategies-to-increase-concessions-spending" class="section level2">
+<h2>Strategies to increase concessions spending</h2>
 <p>Q3. Given the significant predictors, MovieMagic’s management can ???
 to increase the amount spent on concessions.</p>
 <p>The statistically significant variables and their direction are
@@ -495,7 +503,6 @@ leads who “like” or follow popular shows that are available exclusively
 on Netflix, Hulu or other streaming platforms, assuming that if they
 like several of those shows, the customers may have subscriptions to
 multiple streaming platforms.</p>
-</div>
 <div id="penalized-regression-analysis" class="section level3">
 <h3>Penalized Regression Analysis</h3>
 <p>One way to address multicollinearity (if we had detected it in our
@@ -532,15 +539,15 @@ lasso_model &lt;- cv.glmnet(x = predictors,
 (lassm1 &lt;- coef(lasso_model, s=&quot;lambda.min&quot;, exact=FALSE))</code></pre>
 <pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
 ##                      s1
-## (Intercept)  7.04413093
-## age          0.17571437
+## (Intercept)  7.04994145
+## age          0.17430899
 ## job          .         
-## streaming   -0.64471312
-## education   -0.04389016
-## seen_alone   0.37653180
-## discount    -0.20979368
-## days_member  0.04932949
-## movies_seen  0.41114300</code></pre>
+## streaming   -0.62892807
+## education   -0.02193835
+## seen_alone   0.26973992
+## discount    -0.16001273
+## days_member  0.04927198
+## movies_seen  0.40225582</code></pre>
 <p>None of the variables have been set to 0 (normally expressed as “.”
 when printed by glmnet). This tells us that at that scale of observation
 <strong>even MovieMagic’s statistically insignificant variables have
@@ -839,8 +846,28 @@ top_terms %&gt;%
 <pre class="r"><code># perplexity calculation - change k = values
 lda &lt;- LDA(LDA_dtm, k = 2, control = NULL) 
 perplexity(lda)</code></pre>
-<pre><code>## [1] 496.7719</code></pre>
+<pre><code>## [1] 498.9659</code></pre>
 </div>
+</div>
+<div id="experimental-design" class="section level2">
+<h2>Experimental Design</h2>
+<p>Yes, a causal experiment can be performed. We would propose a 2x3 A/B
+Test with Loyalty Membership as one dimension and which ad was previewed
+before the movie as the second dimension. The 3 treatments for the ad
+would be 1) ad targeted using words from Group 1 LDA, 2) ad targeted
+using words from Group 2 LDA 3) no pre-movie ad. Every movie ticket
+would have an included discount for $1 off concessions with a QR code
+which would be scanned and allow us to determine which pre-movie ad
+treatment they received. Use of the coupon qualifies you to be counted
+in the study. The outcome variable would be the amount spent on
+concessions. We would want to analyze the data to determine per
+transaction average, per showing proportion of people that made a
+concession purchase, per day aggregate total concession sales, as well
+as comparing the results of all transactions where a ticket was
+scanned.</p>
+</div>
+<div id="conclusions-and-recommendations" class="section level2">
+<h2>Conclusions and Recommendations</h2>
 </div>
 
 

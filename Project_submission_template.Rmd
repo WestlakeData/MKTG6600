@@ -9,42 +9,22 @@ output:
 ```{r setup, include= FALSE}
 # Install Libraries
 library(tidyverse)
-#library(dplyr)
 library(psycho)
 library(car)
 library(caret)
 library(knitr)
 library(caTools)
 library(glmnet)
-#library(tidyverse)
 library(topicmodels)
-#library(ggplot2)
-#library(dplyr)
-#library(tidytext)
-#library(tidyr)
 library(RTextTools)
 library(wordcloud)
 library(tm)
-#library(stringr)
 library(reshape2)
-#library(tidyverse)
-library(topicmodels)
-#library(ggplot2)
-#library(dplyr)
 library(tidytext)
-#library(tidyr)
-library(RTextTools)
-library(wordcloud)
-library(tm)
-#library(stringr)
-
 
 # Load project data
 data <- read.csv("http://data.mishra.us/files/project_data.csv")
-#datasplit <- createDataPartition(data$amount_spent, p = 0.7, list=FALSE)
-#trainData <- data[datasplit,]
-#testData <- data[-datasplit,]
-#text <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
+
 ```
 
 ##  Introduction
@@ -57,22 +37,14 @@ since they have learned from observation that much of their profit is derived fr
 
 
 ```{r linear regression, warning=FALSE, message=FALSE}
-#head(data)
+
 model1<- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor
 
-#model2 <- aov(amount_spent~., data = data)
-#summary(model2)
-
 ```
-Based upon linear regression analysis, we are able to identify age, streaming, days_member and movies_seen as the significant predictors (p <0.05) of amount spent on concessions.  <!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. -->
+Q1 Of the 8 predictors, which predictors have a significant influence on amount spent on concessions? Which predictors are multicollinear? Justify your response with reasons from the analysis.
 
-```{r LM refinement, warning=FALSE, message=FALSE, include=FALSE}
-modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data= data)
-summary(modelLM)
-
-```
-Of the signficant independent variables, *age*, *days_member* and *movies_seen* all display a positive influence on the outcome variable *amount_spent* meaning that for every increase in these variables, it is predicted that the amount spent on concession will also increase.  The only significant predictor variable to display a negative influence is *streaming* which shows a remarkably strong negative influence when compared with the other predictor variables.  Therefore any increase in this variable will strongly decrease the *amount_spent* outcome variable.  This was determined using a linear regression. To determine whether a penalized regression analysis would further inform this, we need to determine to what extent the independent variables are correlated.  As with any data set of seemingly independent variables, the possibility exists that the independent variables are not in fact independent.  To determine this we check for multicollinearity.
+Based upon linear regression analysis, we are able to identify age, streaming, days_member and movies_seen as the significant predictors (p <0.05) of amount spent on concessions.  Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred.
 
 *Multicollinear Analysis*
 
@@ -80,10 +52,20 @@ The primary test for mulitcollinearity is to calculate the Variance Inflation Fa
 
 ```{r VIF, warning=FALSE, message=FALSE}
 vif(model1)
-#vif(modelLM)
+
 ```
 None of the variables display a high degree of multicollinearity (VIF > 5).  As such, no measures are required to address multicollinearity in the model.
 
+
+```{r LM refinement, warning=FALSE, message=FALSE, include=FALSE}
+modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data= data)
+summary(modelLM)
+
+```
+Q2 Which predictors have a positive influence and which predictors have a negative influence on the amount spent on concessions? Which analysis, regression or penalized regression, helped you answer this question? If you ran a neural net model, can it help you find the significant (or not) predictors and their magnitude and direction
+of influence on the outcome?
+
+Of the significant independent variables, *age*, *days_member* and *movies_seen* all display a positive influence on the outcome variable *amount_spent* meaning that for every increase in these variables, it is predicted that the amount spent on concession will also increase.  The only significant predictor variable to display a negative influence is *streaming* which shows a remarkably strong negative influence when compared with the other predictor variables.  Therefore any increase in this variable will strongly decrease the *amount_spent* outcome variable.  This was determined using a linear regression. Based upon the low levels of multicollinearity observed above, penalized regression would not yield significantly different results.  Use of a neural net model would give us weights, but due to the characteristics of a neural net model, we would no be able to determine the direction or magnitude of any independent variables effect.
 
 ## Strategies to increase concessions spending
 
