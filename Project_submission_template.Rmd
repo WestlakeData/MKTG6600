@@ -60,17 +60,140 @@ vif(model1)
 ```
 None of the variables display a high degree of multicollinearity (VIF > 5).  As such, no measures are required to address multicollinearity in the model.
 
-**Penalized Regression Analysis**
+
+### Strategies to increase concessions spending
+
+<!-- Q3. Given the significant predictors, MovieMagic's management can ??? to increase the amount spent on concessions. -->
+
+The statistically significant variables and their direction are `age` (higher age means higher sales), quantity of `streaming` subscriptions held by customer (more subscriptions means lower sales), `days member` (veteran MovieMagic members spend more on concessions), and `movies_seen` during the last time period (more movies seen correlates to higher sales).
+
+<!-- CG: These variables suggest a demographic story about MovieMagic's most profitable customers. The chain's cash cows are likely middle-aged or senior movie buffs who have, for whatever reason, not imitated young consumers' tendency to join multiple on-demand media platforms despite the wider movie selection the platforms offer. These customers also enjoy MovieMagic's concessions enough that their consumption engenders more consumption — something about the concessions brings the customers back again and again as their membership matures.
+
+In light of this information, management will win by optimizing its concessions portfolio, delivery and marketing to defensively retain these big-spending customers.  It could offer concessions popular among older consumers, consider movie-themed product tie-ins in light of the segments' love for cinema, and create on-site advertising about its concessions with testimonials from satisfied long-term members to incentivize new members to try concessions early in their membership. Management should not rule out the use of deeply discounted coupons to encourage new members to try the concessions right after joining. Although our initial regression on the full data set shows that `discount:yes` has a negative effect on concession sales, that result was not statistically significant. Further experimentation could prove that a coupon for the right product(s), with the right amount of discount, or delivered at a convenient moment (offered proactively at the point-of-sale versus by email or post) increases spending.
+
+**Offensively**, management can entice new customers by digitally advertising to middle-aged or senior consumers who are known movie buffs on Facebook — a platform whose users skew older. Additionally, management can opt **not** to advertise to leads who "like" or follow popular shows that are available exclusively on Netflix, Hulu or other streaming platforms, assuming that if they like several of those shows, the customers may have subscriptions to multiple streaming platforms.  -->
+
+
+
+### Penalized Regression Analysis
+
+One way to address multicollinearity (if we had detected it in our model) would be to use a penalized regression. 
+
+Penalized regressions add a regularization parameter to their coefficients if two or more predictors appear to be multicollinear while the algorithm regresses all predictors against each other. In that case, the **regressions carefully add errors or bias to their coefficients, assuming the tweaks will decrease variance when the regression applied to future samples**.
+
+Glmnet's application of the Lasso regression is a powerful penalized regression tool and an optimal choice for variable selection. In contrast with a Ridge regression, which can penalize or tweak coefficients without fully declaring them statistically irrelevant, **the Lasso regression can set irrelevant predictors to zero and extract meaning from any remaining predictors**, however subtle their influence.
+
+As seen below in MovieMagic's case, the coefficients of a Lasso regression built on all 2,000 observations tell us that we should use all the variables available to us to build a model. 
+
 
 ```{r, warning=FALSE, message=FALSE}
 
+outcome <- data$amount_spent
+predictors <- data.matrix(data[,c(1:8)])
+
+# Create a Lasso model on all 2,000 observations in the original data set
+lasso_model <- cv.glmnet(x = predictors,
+                         y = outcome, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+
+
+# The coefficients of a Lasso regression on our dataset.
+(lassm1 <- coef(lasso_model, s="lambda.min", exact=FALSE))
+
+```
+
+None of the variables have been set to 0 (normally expressed as "." when printed by glmnet). This tells us that at that scale of observation **even MovieMagic's statistically insignificant variables have some power to predict `amount_spent`**, however small. Those predictors don't have the statistical power to disprove the null hypothesis, but Lasso's failure to eliminate them means that their magnitude and direction still add meaning to the model in light of their relationship to other predictors.
+
+
+### Avoid Overfitting with Test/Train Cross-Validation
+
+Using any predictive model risks developing a regression with a laser-precise fit to a research sample that performs poorly when used on a fresh sample from the population being studied. Analysts walk a tightrope between bias and variance — how much precision should be sacrificed in the interest of generalizability to future samples from the population?
+
+One way to mitigate that risk is to simulate the transition from the training sample to a new sample from the population by pretending that a minority percentage of our observations **are** a new sample. We call that percentage of observations a "test," "validation" or "hold-out" set. The remaining observations are called the "train" set because they're used to train our algorithm.
+
+We answer the question of how much precision to sacrifice in the interest of generalizibility by making our test set larger or smaller by percentage until we find the model with optimal RMSE and R-squared values.
+
+In the case of MovieMagic, we will cross-validate our findings by comparing a **80% train / 20% test** and a **70% train / 30% test** set.
+
+
+```{r, warning=FALSE, message=FALSE}
+
+set.seed(1234)
+
+# Create the 70/30 train and test sets
+sample7 <- sample.split(data$amount_spent, SplitRatio = 0.7)
+train7 <- subset(data, sample7 == TRUE)
+test7 <- subset(data, sample7 == FALSE)
+
+# Create the 80/20 train and test sets
+sample8 <- sample.split(data$amount_spent, SplitRatio = 0.8)
+train8 <- subset(data, sample8 == TRUE)
+test8 <- subset(data, sample8 == FALSE)
 
 ```
 
 
-**Predictive model**
-The analysis was run by splitting the data........
+As seen below, in the case of the 80/20 split, the information lost in the 20% of observations dedicated to the test set means that `job` and `education` lose their predictive power — Lasso has set their influence to zero.
+
+After an additional 10% of information is lost in the 70/30 split, Lasso also eliminates `seen_alone`. Furthermore, `streaming` keeps the direction of its effect, but loses some of its magnitude, falling from -0.78 to -0.39. Discount also loses some of its magnitude, falling from -0.33 to -0.13.
+
+Both sets of revised coefficients suggest that not all variables will add predictive power to our regression. We knew from their significance levels that many were too statistically insignificant to study as a potential lever of action for management, but now we know that two to three variables don't add any predictive power to our model. That said, none of the eliminated variables included our statistically significant ones — the significant ones will probably still be the main levels of action for management — it's just a question of how large their effect will be.
+
+
 ```{r, warning=FALSE, message=FALSE}
+
+# Create a Lasso regression on the 80/20 training set
+lasso_model8 <- cv.glmnet(x = data.matrix(train8[,c(1:8)]),
+                         y = train8$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+
+
+# Lasso coefficients of 80% training set
+(lass8coef <- coef(lasso_model8, s="lambda.min", exact=FALSE))
+
+
+# Create a Lasso regression on the 70/30 training set
+lasso_model7 <- cv.glmnet(x = data.matrix(train7[,c(1:8)]),
+                         y = train7$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+
+
+# Lasso coefficients of 70% training set
+(lass7coef <- coef(lasso_model7, s="lambda.min", exact=FALSE))
+
+```
+
+
+Comparing the RSME, R-squared and MAE values performance of the two models below tells us which of the two splits best straddles bias and variance. The 80/20 split registers lower RMSE and MAE scores than the 70/30 split. This means **the 80/20 model is likely to perform better on future data sets**, even though it explains less variance within its test data compared to the 70/30 model, as evidenced by its slightly lower R-squared score.
+
+ <!-- Chris and Bryan — this is where I got the interpretation above. It feels risky to use Stack Exchange as a source, but this helped me understand the results a little better than the professor's notes. https://datascience.stackexchange.com/questions/100605/rmse-vs-r-squared -->
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# Create a Lasso model based on the 70/30 training set
+model7 <- train(amount_spent ~ ., data = train7, method = "lasso", na.action=na.exclude)
+predictions7 <-predict(model7, newdata=test7)
+
+# Create a Lasso model based on the 80/20 training set
+model8 <- train(amount_spent ~ ., data = train8, method = "lasso", na.action=na.exclude)
+predictions8 <-predict(model8, newdata=test8)
+
+
+# 70/30 split - RMSE, Rsquared, and MAE values
+postResample(predictions7, test7$amount_spent)
+
+# 80/20 split - RMSE, Rsquared, and MAE values
+postResample(predictions8, test8$amount_spent)
 
 
 ```
