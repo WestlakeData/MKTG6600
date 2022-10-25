@@ -1,0 +1,559 @@
+---
+title: "Case Study: MovieMagic Concessions and User Review Statistical Analysis"
+author: "Brian Burdick, Chris Gearheart and Chris Porter"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include= FALSE}
+
+# Install Libraries
+library(tidyverse)
+library(psycho)
+library(car)
+library(caret)
+library(knitr)
+library(caTools)
+library(glmnet)
+library(topicmodels)
+library(RTextTools)
+library(wordcloud)
+library(tm)
+library(reshape2)
+library(tidytext)
+
+# Load project data
+data <- read.csv("http://data.mishra.us/files/project_data.csv")
+```
+
+# Introduction
+
+*MovieMagic*, is a regional movie chain operating in the Southwest
+region of the US. They are considering ways in which they can increase
+spending on concessions.
+
+MovieMagic has collected information about 2,000 of its customers, some
+of whom are part of their loyalty program and some who are not. They
+have information on eight variables, which they plan to validate for use
+as predictors. They plan to use the amount spent on concessions as the
+outcome variable because much of their profit is derived from concession
+sales.
+
+### 
+
+## Q1
+
+> Of the 8 predictors, which predictors have a significant influence on
+> amount spent on concessions? Which predictors are multicollinear?
+> Justify your response with reasons from the analysis.
+
+#### Regression Analysis
+
+Based upon the linear regression analysis printed below, we are able to
+identify `age`, `streaming`, `days_member` and `movies_seen` as the
+significant predictors (p \<0.05) of amount spent on concessions. Upon
+eliminating non-significant predictor variables, we see that the model
+continues to explain a similar amount of the variation (MRS 0.6738 -\>
+0.635), so little loss of information has occurred.
+
+```{r linear regression, warning=FALSE, message=FALSE}
+model1<- lm(amount_spent~., data=data)
+summary(model1) # will give output for each level of each categorical predictor
+```
+
+#### Multicollinear Analysis
+
+The primary test for multicollinearity is to calculate the Variance
+Inflation Factor (VIF) for each independent variable.
+
+```{r VIF, warning=FALSE, message=FALSE}
+vif(model1)
+```
+
+None of the variables display a high degree of multicollinearity (VIF \>
+5). As such, no measures are required to address multicollinearity in
+the model.
+
+```{r LM refinement, warning=FALSE, message=FALSE, include=FALSE}
+modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data= data)
+summary(modelLM)
+```
+
+## Q2
+
+> Which predictors have a positive influence and which predictors have a
+> negative influence on the amount spent on concessions? Which analysis,
+> regression or penalized regression, helped you answer this question?
+> If you ran a neural net model, can it help you find the significant
+> (or not) predictors and their magnitude and direction of influence on
+> the outcome?
+
+#### Model Selection - Linear vs. Penalized vs. Neural Net
+
+Linear regression tells us that, of the significant independent
+variables, `age`, `days_member` and `movies_seen` all display a positive
+influence on the outcome variable `amount_spent` meaning that for every
+increase in these variables, it is predicted that the amount spent on
+concession will also increase. The only significant predictor variable
+to display a negative influence is `streaming` which shows a remarkably
+strong negative influence when compared with the other predictor
+variables. Therefore, any increase in this variable will strongly
+decrease the `amount_spent` outcome variable. Based upon the low levels
+of multicollinearity observed above, penalized regression would not
+yield significantly different results. Use of a neural net model would
+give us precise weights, but due to the "black box" characteristics of
+neural nets, we would not be able to determine the direction or
+magnitude of any independent variables, let alone communicate them to
+management.
+
+## Q3.
+
+> Given the significant predictors, what strategies can MovieMagic come
+> up with to increase amount spent on concessions?
+
+#### Marketing Strategies for Management
+
+The statistically significant variables and their direction are `age`
+(higher age means higher sales), quantity of `streaming` subscriptions
+held by customer (more subscriptions means lower sales), `days member`
+(veteran MovieMagic members spend more on concessions), and
+`movies_seen` during the last time period (more movies seen correlates
+to higher sales).
+
+These variables suggest a demographic story about MovieMagic's most
+profitable customers. The chain's revenue drivers are likely middle-aged
+or senior movie buffs who have, for whatever reason, not imitated young
+consumers' in joining multiple on-demand media platforms despite their
+wider selection of movies. Additionally, something about the concessions
+brings the customers back more frequently as their membership matures.
+
+In light of this information, management will win by optimizing its
+concessions portfolio, delivery and marketing to defensively retain
+these big-spending customers. It could offer concessions popular among
+older consumers, consider movie-themed product tie-ins in light of the
+segment's love for cinema, and create on-site advertising encouraging
+new members to try concessions as early in their membership as possible
+using testimonials from satisfied long-term members.
+
+Management should not rule out the use of deeply discounted coupons to
+encourage new members to try the concessions right after joining.
+Although the initial regression on the full data set shows that
+`discount:yes` has a negative effect on concession sales, that result
+was not statistically significant. Further experimentation could prove
+that a coupon for the right product(s), at the right rate of discount,
+or delivered at the perfect moment (perhaps offered proactively at the
+point-of-sale instead of by email or post) increases spending.
+
+Offensively, management can entice new customers by digitally
+advertising to middle-aged or senior consumers who are known movie buffs
+on Facebook --- a platform whose users skew older. Additionally,
+management can opt **not** to advertise to leads who "like" or follow
+popular shows that are available exclusively on Netflix, Hulu or other
+streaming platforms, assuming that if they like several of those shows,
+the customers may have subscriptions to multiple streaming platforms.
+
+## Q4
+
+> Which analysis, linear regression or penalized regression, helps you
+> select relevant variables? Which predictor variables would you use in
+> the model? Justify your answer using the analysis. Would a Ridge or a
+> LASSO help in selecting relevant predictors?
+
+#### Variable Selection
+
+One way to address multicollinearity and eliminate irrelevant variables
+(if we happen to find them during analysis) would be to use a penalized
+regression.
+
+Penalized regressions add a regularization parameter to their
+coefficients if two or more predictors are flagged as multicollinear
+when the algorithm regresses all predictors against each other. In that
+case, the penalized regressions add strategic errors or biases to their
+coefficients on the assumption the tweaks will decrease variance when
+the regression is applied to future samples.
+
+Glmnet's application of the Lasso regression is a powerful penalized
+regression tool and an optimal choice for variable selection. In
+contrast with a Ridge regression, which can penalize or tweak
+coefficients without fully declaring them statistically irrelevant, the
+Lasso regression can set irrelevant predictors to zero and extract
+meaning from any remaining predictors, however subtle their influence.
+
+As seen below in MovieMagic's case, the coefficients of a Lasso
+regression built on all 2,000 observations tell us that we should use
+all the available variables to build a model.
+
+```{r, warning=FALSE, message=FALSE}
+outcome <- data$amount_spent
+predictors <- data.matrix(data[,c(1:8)])
+# Create a Lasso model on all 2,000 observations in the original data set
+lasso_model <- cv.glmnet(x = predictors,
+                         y = outcome, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+# The coefficients of a Lasso regression on our dataset.
+(lassm1 <- coef(lasso_model, s="lambda.min", exact=FALSE))
+```
+
+Note that none of the variables have been set to 0 (normally expressed
+as "`.`" when printed by glmnet). This tells us that at that scale of
+2,000 observations, even MovieMagic's statistically insignificant
+variables have some power to predict `amount_spent`, however small.
+Those predictors don't have the statistical power to disprove the null
+hypothesis, but Lasso's failure to eliminate them means that their
+magnitude and direction still add meaning to the model in light of their
+relationship to other predictors.
+
+## Q5
+
+> If you split the data 70-30 versus 80-20, how does it influence i)
+> relevant variables selected, ii) RMSE and R-squared values of the
+> linear regression?
+
+#### Cross-validation with Test/Train Splits
+
+Using any predictive model risks developing a regression with a
+laser-precise fit to a research sample that then performs poorly when
+applied to a fresh sample from the population being studied. Analysts
+walk a tightrope between bias and variance --- how much precision should
+be sacrificed in the interest of generalizability to future samples from
+the population?
+
+One way to mitigate that risk is to simulate the transition from the
+training sample to a new sample from the population by pretending that a
+minority percentage of our observations **are** a new sample. We call
+that percentage of observations a "test," "validation" or "hold-out"
+set. The remaining observations are called the "train" set because
+they're used to train our algorithm.
+
+We answer the question of how much precision to sacrifice in the
+interest of generalizibility by making our test set larger or smaller by
+percentage until we find the model with optimal RMSE, R-squared or MAE
+values.
+
+In the case of MovieMagic, we will cross-validate our findings by
+comparing a **80% train / 20% test** and a **70% train / 30% test** set.
+
+```{r, warning=FALSE, message=FALSE}
+set.seed(1234)
+
+# Create the 70/30 train and test sets
+sample7 <- sample.split(data$amount_spent, SplitRatio = 0.7)
+train7 <- subset(data, sample7 == TRUE)
+test7 <- subset(data, sample7 == FALSE)
+
+# Create the 80/20 train and test sets
+sample8 <- sample.split(data$amount_spent, SplitRatio = 0.8)
+train8 <- subset(data, sample8 == TRUE)
+test8 <- subset(data, sample8 == FALSE)
+```
+
+As seen below, in the case of the 80/20 split, the information lost in
+the 20% of observations dedicated to the test set means that `job` loses
+its predictive power --- Lasso has set its influence to zero.
+
+```{r, warning=FALSE, message=FALSE}
+# Create a Lasso regression on the 80/20 training set
+lasso_model8 <- cv.glmnet(x = data.matrix(train8[,c(1:8)]),
+                         y = train8$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+
+# Lasso coefficients of 80% training set
+(lass8coef <- coef(lasso_model8, s="lambda.min", exact=FALSE))
+```
+
+After an additional 10% of information is lost in the 70/30 split, Lasso
+also eliminates `education`. Furthermore, `streaming` keeps the
+direction of its effect, but loses some of its magnitude, falling from
+-0.71 to -0.44. Discount also loses some of its magnitude, falling from
+-0.57 to -0.29.
+
+```{r, warning=FALSE, message=FALSE}
+# Create a Lasso regression on the 70/30 training set
+lasso_model7 <- cv.glmnet(x = data.matrix(train7[,c(1:8)]),
+                         y = train7$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = "default")
+
+# Lasso coefficients of 70% training set
+(lass7coef <- coef(lasso_model7, s="lambda.min", exact=FALSE))
+```
+
+The two sets of pared-down coefficients tell us that not all eight
+variables are guaranteed to add predictive power to our regression. The
+insignificance levels of several predictors had already disqualified
+them as potential levers of action for management, but now we also know
+that algorithmically, two to three variables don't add **any**
+predictive power to our model.
+
+Nevertheless, none of the eliminated variables included our
+statistically significant ones, which will probably still be the main
+levels of action for management --- the question is how large their
+effect will be in the model that performs best against our test set.
+
+#### Which test/train split will perform better against future samples?
+
+Comparing the RSME, R-squared and MAE values performance below of the
+two models against our test set tells us which of the two splits best
+straddles bias and variance:
+
+-   The 80/20 split registers **lower RMSE** (8.99 \< 10.04) and **MAE
+    scores** (7.26 \< 8.03) than the 70/30 split.
+
+-   The 80/20 split's **higher R^2^ score of 0.676** tells us that it
+    explains 0.6% more of the variance in its test set than the 70/30
+    split.
+
+This means the 80/20 model is likely to perform better on future data
+sets.
+
+```{r, warning=FALSE, message=FALSE}
+# Create a Lasso model based on the 70/30 training set
+model7 <- train(amount_spent ~ ., data = train7, method = "lasso", na.action=na.exclude)
+predictions7 <-predict(model7, newdata=test7)
+# Create a Lasso model based on the 80/20 training set
+model8 <- train(amount_spent ~ ., data = train8, method = "lasso", na.action=na.exclude)
+predictions8 <-predict(model8, newdata=test8)
+# 70/30 split - RMSE, Rsquared, and MAE values
+postResample(predictions7, test7$amount_spent)
+# 80/20 split - RMSE, Rsquared, and MAE values
+postResample(predictions8, test8$amount_spent)
+```
+
+## Q6
+
+> MovieMagic wants to visualize the reviews through a wordcloud and
+> wants to find out which words are used most commonly in the reviews
+> that customers write for MovieMagic. Create 2 wordclouds - one for
+> reviews that received 3, 4, or 5 star ratings and another with reviews
+> that received 1 or 2 stars ratings. Knowing the prominent words in
+> each of the wordclouds, what strategies can be developed in messaging
+> customers? Would the strategies differ?
+
+#### Text Analysis
+
+Management's tactics towards the customer segments revealed in text
+analysis will differ substantially --- Customers who had a negative
+experience will require damage control messaging and interventions. The
+positive group needs reminders of why they love (and will continue to
+love) going to the movies.
+
+**Positive Reviews:** The three most common words are "great", "movie,"
+and "food." Based on the top three most common words, MovieMagic can
+guess that customers enjoyed the movies and food on offer. A few
+strategies that we would suggest focusing on are:
+
+1.  Priming happy customers for repeat attendance by communicating
+    upcoming movies releases and associating them with fitting seasonal
+    treats.
+
+2.  Using customer resource management software to track customer
+    satisfaction and offer surprise BOGO coupons to further delight
+    happy customers.
+
+3.  Test different combinations of concession, discount and new movie
+    messaging in display signage and trailers --- which combinations are
+    the most effective in inducing sales?
+
+**Negative Reviews:** The three most common words associated with
+negative reviews were are\
+"hour," "food," and "like." The world cloud suggests that the service
+was slow and customers may have waited around an hour to get their food.
+The negative reviews suggest operational rather than marketing concerns.
+Management should audit whether the theater concessions are adequately
+staffed, organized, or efficient. This could be a focus area for the
+theaters manager to improve customers satisfaction. A time study could
+be completed on various nights to see the length of time it takes for
+people to get their food. Once that number has been improved messaging
+to this group could be around the improvements in the speed of service.
+
+```{r, warning=FALSE, message=FALSE}
+reviews <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
+#Positive Word Cloud
+Positive_Reviews <- filter(reviews,star >= 3)
+Review_corpus_p <- VCorpus(VectorSource(Positive_Reviews$text))
+Review_corpus_p <- tm_map(Review_corpus_p, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+Review_corpus_p <- tm_map(Review_corpus_p, removeWords, stopwords(kind="en")) # remove stop words
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+Review_corpus_p <- tm_map(Review_corpus_p, func_Space, "/|@|\\|")
+Review_corpus_p <- tm_map(Review_corpus_p, stripWhitespace) # remove white space
+Review_corpus_p <- tm_map(Review_corpus_p, removeNumbers) # remove numeric values
+Review_corpus_p <- tm_map(Review_corpus_p, removePunctuation) # remove punctuations
+dtm_review <- TermDocumentMatrix(Review_corpus_p)
+m <- as.matrix(dtm_review)
+v <- sort(rowSums(m),decreasing=TRUE)
+review_final <- data.frame(word = names(v),freq=v)
+set.seed(1234)
+wordcloud(words = review_final$word, freq = review_final$freq, min.freq = 2,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"),scale=c(3, 0.7))
+##Negative Word Cloud
+Negative_Reviews <- filter(reviews,star < 3)
+Review_corpus_n <- VCorpus(VectorSource(Negative_Reviews$text))
+Review_corpus_n <- tm_map(Review_corpus_n, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+Review_corpus_n <- tm_map(Review_corpus_n, removeWords, stopwords(kind="en")) # if we remove stopwords the wordcloud becomes sparse. 
+# Run with and without stop words to see how word cloud changes
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+Review_corpus_n <- tm_map(Review_corpus_n, func_Space, "/|@|\\|")
+Review_corpus_n <- tm_map(Review_corpus_n, stripWhitespace) # remove white space
+Review_corpus_n <- tm_map(Review_corpus_n, removeNumbers) # remove numbers
+Review_corpus_n <- tm_map(Review_corpus_n, removePunctuation) # remove punctuations
+dtm_review_n <- TermDocumentMatrix(Review_corpus_n)
+m_n <- as.matrix(dtm_review_n )
+v_n <- sort(rowSums(m_n),decreasing=TRUE)
+review_final_n <- data.frame(word = names(v_n),freq=v_n)
+set.seed(1234)
+wordcloud(words = review_final_n$word, freq = review_final_n$freq, min.freq = 1,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"),scale=c(3, .5))
+```
+
+## Q7
+
+> MovieMagic also wants to use topic modeling to find out whether the
+> content in the reviews could be categorized into specific topics. If
+> you used LDA to create 3 topic groups (k = 3), MovieMagic wants you to
+> use the words within the 3 topics to infer topic title. Which term is
+> the most relevant in each of the three topics and how would it inform
+> your business strategy? Given the topics you inferred what strategies
+> would you suggest are possible for MovieMagic if it wants to increase
+> con- cession sales. Would you recommend promotions or advertising or
+> loyalty program; justify your choice of business strategy?
+
+#### Topic Modeling
+
+We conducted an unsupervised Latent Dirichlet Allocation (LDA) analysis
+on the corpus of MovieMagic reviews to uncover the top three topics,
+trends, or "generative mechanisms" motivating reviewers' word choice.
+
+#### Topic 1
+
+Title: "**Concessions**" \| Top Word: "**Food**" \| Top 3 Words:
+"**Food**," "**Fun**," "**Cinema**"
+
+**Strategy**: These reviewers were trying to express the fun of eating
+at the cinema. Management should create a customer resource
+management-focused loyalty program to gain additional insight into its
+customer base. With a large enough sample, analysts could utilize a
+clustering technique to identify common characteristics across lucrative
+segments, then cater promotions and advertising to them. This loyalty
+card data could provide insights into what they purchase at concessions,
+what movies they tend to see, and how often they attend the theater ---
+a good shorthand for predicted lifetime customer value (LCV).
+
+#### Topic 2
+
+Title: "**Experience**" \| Top Word: "**Movie**" \| Top 3 Words:
+"**Movie**," "**Great**," "**Place**"
+
+**Strategy**: These reviewers were trying to express the satisfaction of
+watching a movie in a great venue. Management should utilize the
+information from its loyalty card program to anticipate the movies most
+likely to interest each member, then push targeted ads to those
+customers. This is a defensive strategy that will keep customers on the
+customer journey and ideally result in concession stand sales. These
+customers come to MovieMagic for the experience --- management should
+conduct additional analysis to see with whom the customers are sharing
+the experience and test whether those groups are responsive to
+discounts. Groups of friends of six or more could be offered a volume
+discount on tickets and concessions. Couples on date nights might be
+offered a discounted date night package with two tickets, drinks, and
+popcorn. Management needs to know whether delighting larger parties of
+moviegoers will increase the average group size and the frequency of
+group attendance --- if yes, increased concessions sales will follow.
+
+#### Topic 3
+
+Title: [Indeterminate] \| Top Word: "**Just**" \| Top 3 Words:
+"**Just**," "**Like**," "**Guest**"
+
+**Strategy**: The generative mechanism of this topic is indeterminate.
+Our perplexity calculation below suggests that two LDA topics would
+provide more information than three. Management should review a list of
+reviews that contain these words and see if they can deduce a common
+theme.
+
+```{r, warning=FALSE, message=FALSE}
+## Topic model LDA 
+reviews_LDA <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
+LDA_corpus <- VCorpus(VectorSource(reviews_LDA$text)) #create corpus
+#Preprocessing
+LDA_corpus <- tm_map(LDA_corpus, content_transformer(tolower)) # covert all to lower case else same word as lower and uppercase will classified as different
+LDA_corpus <- tm_map(LDA_corpus, removeWords, stopwords(kind="en")) # remove stop words
+func_Space <- content_transformer(function(x, pattern) gsub(pattern, " ", x)) # a function to clean /,@,\\,|
+LDA_corpus <- tm_map(LDA_corpus, func_Space, "/|@|\\|")
+LDA_corpus <- tm_map(LDA_corpus, stripWhitespace) # remove white space
+LDA_corpus <- tm_map(LDA_corpus, removeNumbers) # remove numeric values
+LDA_corpus <- tm_map(LDA_corpus, removePunctuation) # remove punctuation
+LDA_dtm <- DocumentTermMatrix(LDA_corpus) #create a DTM
+rowTotals <- apply(LDA_dtm , 1, sum) #sum of words
+LDA_dtm   <- LDA_dtm [rowTotals> 0, ] # removed rows with no words 
+set.seed(123)
+lda_topic <- LDA(LDA_dtm, k = 3, method = "Gibbs", control = NULL) # 3 LDA topics
+LDA_topic_model <- tidy(lda_topic, matrix = "beta") 
+top_terms <- LDA_topic_model %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>% # 10 terms
+  ungroup() %>%
+  arrange(topic, -beta)
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+# perplexity calculation - change k = values
+lda <- LDA(LDA_dtm, k = 2, control = NULL) 
+perplexity(lda)
+```
+
+## Experimental Design
+
+Our findings raise a few questions that we could answer conclusively
+with an ANOVA analysis -- designing several experimental groups by
+random assignment and comparing the means and significances of groups
+against the mean of the entire data set.
+
+We propose the 2x3 ANOVA structure below to test the effect of three
+dimensions on `amount_spent`:
+
+|                        | No concessions ad | Topic 1-based ad | Topic 2-based ad |
+|------------------------|-------------------|------------------|------------------|
+| **Loyalty member**     | ^[Group mean]^    | ^[Group mean]^   | ^[Group mean]^   |
+| **Non-loyalty member** | ^[Group mean]^    | ^[Group mean]^   | ^[Group mean]^   |
+
+During the period being studied, every movie ticket will include a QR
+code discount for \$1 off concessions allow us to determine whether
+pre-movie ad treatment they received. Metadata built into the QR code
+will tell us the experimental group of each viewer and tie their
+purchase into concessions associated with each viewer. Use of the coupon
+qualifies viewers to be counted in the study.
+
+After gathering and cleaning the data, we would determine the per
+transaction average, per showing proportion of moviegoers that made a
+concession purchase, the per day aggregate total concession sales, then
+comparing the results of all transactions where a ticket was scanned.
+
+## Conclusions and Recommendations
+
+Through careful analysis and experimentation, we now know that
+MovieMagic's goal of increasing concession sales has several potential
+levers for action, including:
+
+1.  Marketing to more profitable segments of its customer base
+
+2.  Increasing customer lifetime value by priming its most satisfied
+    customers to return
+
+3.  Preventing churn by improving its customer service
