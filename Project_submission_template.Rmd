@@ -12,8 +12,32 @@ library(tidyverse)
 #library(dplyr)
 library(psycho)
 library(car)
-#library(caret)
+library(caret)
 library(knitr)
+library(caTools)
+library(glmnet)
+#library(tidyverse)
+library(topicmodels)
+#library(ggplot2)
+#library(dplyr)
+#library(tidytext)
+#library(tidyr)
+library(RTextTools)
+library(wordcloud)
+library(tm)
+#library(stringr)
+library(reshape2)
+#library(tidyverse)
+library(topicmodels)
+#library(ggplot2)
+#library(dplyr)
+library(tidytext)
+#library(tidyr)
+library(RTextTools)
+library(wordcloud)
+library(tm)
+#library(stringr)
+
 
 # Load project data
 data <- read.csv("http://data.mishra.us/files/project_data.csv")
@@ -32,7 +56,7 @@ since they have learned from observation that much of their profit is derived fr
 **Regression Analysis**
 
 
-```{r linear regression, echo= FALSE, warning=FALSE, message=FALSE}
+```{r linear regression, warning=FALSE, message=FALSE}
 #head(data)
 model1<- lm(amount_spent~., data=data)
 summary(model1) # will give output for each level of each categorical predictor
@@ -43,7 +67,7 @@ summary(model1) # will give output for each level of each categorical predictor
 ```
 Based upon linear regression analysis, we are able to identify age, streaming, days_member and movies_seen as the significant predictors (p <0.05) of amount spent on concessions.  <!--Upon eliminating non-significant predictor variables, we see that the model continues to explain a similar amount of the variation (MRS 0.6738 -> 0.635), so little loss of information has occurred. -->
 
-```{r LM refinement, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
+```{r LM refinement, warning=FALSE, message=FALSE, include=FALSE}
 modelLM<- lm(amount_spent~age+streaming+days_member+movies_seen, data= data)
 summary(modelLM)
 
@@ -54,24 +78,24 @@ Of the signficant independent variables, *age*, *days_member* and *movies_seen* 
 
 The primary test for mulitcollinearity is to calculate the Variance Inflation Factor (VIF) for each independent variable.
 
-```{r VIF, echo=FALSE, warning=FALSE, message=FALSE}
+```{r VIF, warning=FALSE, message=FALSE}
 vif(model1)
 #vif(modelLM)
 ```
 None of the variables display a high degree of multicollinearity (VIF > 5).  As such, no measures are required to address multicollinearity in the model.
 
 
-### Strategies to increase concessions spending
+## Strategies to increase concessions spending
 
-<!-- Q3. Given the significant predictors, MovieMagic's management can ??? to increase the amount spent on concessions. -->
+Q3. Given the significant predictors, MovieMagic's management can ??? to increase the amount spent on concessions.
 
 The statistically significant variables and their direction are `age` (higher age means higher sales), quantity of `streaming` subscriptions held by customer (more subscriptions means lower sales), `days member` (veteran MovieMagic members spend more on concessions), and `movies_seen` during the last time period (more movies seen correlates to higher sales).
 
-<!-- CG: These variables suggest a demographic story about MovieMagic's most profitable customers. The chain's cash cows are likely middle-aged or senior movie buffs who have, for whatever reason, not imitated young consumers' tendency to join multiple on-demand media platforms despite the wider movie selection the platforms offer. These customers also enjoy MovieMagic's concessions enough that their consumption engenders more consumption — something about the concessions brings the customers back again and again as their membership matures.
+These variables suggest a demographic story about MovieMagic's most profitable customers. The chain's cash cows are likely middle-aged or senior movie buffs who have, for whatever reason, not imitated young consumers' tendency to join multiple on-demand media platforms despite the wider movie selection the platforms offer. These customers also enjoy MovieMagic's concessions enough that their consumption engenders more consumption — something about the concessions brings the customers back again and again as their membership matures.
 
 In light of this information, management will win by optimizing its concessions portfolio, delivery and marketing to defensively retain these big-spending customers.  It could offer concessions popular among older consumers, consider movie-themed product tie-ins in light of the segments' love for cinema, and create on-site advertising about its concessions with testimonials from satisfied long-term members to incentivize new members to try concessions early in their membership. Management should not rule out the use of deeply discounted coupons to encourage new members to try the concessions right after joining. Although our initial regression on the full data set shows that `discount:yes` has a negative effect on concession sales, that result was not statistically significant. Further experimentation could prove that a coupon for the right product(s), with the right amount of discount, or delivered at a convenient moment (offered proactively at the point-of-sale versus by email or post) increases spending.
 
-**Offensively**, management can entice new customers by digitally advertising to middle-aged or senior consumers who are known movie buffs on Facebook — a platform whose users skew older. Additionally, management can opt **not** to advertise to leads who "like" or follow popular shows that are available exclusively on Netflix, Hulu or other streaming platforms, assuming that if they like several of those shows, the customers may have subscriptions to multiple streaming platforms.  -->
+**Offensively**, management can entice new customers by digitally advertising to middle-aged or senior consumers who are known movie buffs on Facebook — a platform whose users skew older. Additionally, management can opt **not** to advertise to leads who "like" or follow popular shows that are available exclusively on Netflix, Hulu or other streaming platforms, assuming that if they like several of those shows, the customers may have subscriptions to multiple streaming platforms.
 
 
 
@@ -231,16 +255,6 @@ their food.  Once that number has been improved messaging to this group could be
 in the speed of service. "
 
 ```{r, warning=FALSE, message=FALSE}
-#library(tidyverse)
-library(topicmodels)
-#library(ggplot2)
-#library(dplyr)
-#library(tidytext)
-#library(tidyr)
-library(RTextTools)
-library(wordcloud)
-library(tm)
-#library(stringr)
 
 reviews <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
 
@@ -329,19 +343,7 @@ Strategy: Nothing emerged out of this topic to act upon.  Perplexity for three t
 
 
 ```{r, warning=FALSE, message=FALSE}
-library(reshape2)
-library(tidyverse)
-library(topicmodels)
-library(ggplot2)
-library(dplyr)
-library(tidytext)
-library(tidyr)
-library(RTextTools)
-library(wordcloud)
-library(tm)
-library(stringr)
 
- 
 ## Topic model LDA 
 
 reviews_LDA <- read.csv(url("http://data.mishra.us/files/project_reviews.csv"))
@@ -388,3 +390,6 @@ lda <- LDA(LDA_dtm, k = 2, control = NULL)
 perplexity(lda)
 
 ```
+## Experimental Design
+
+Yes, a causal experiment can be performed. We would propose a 2x3 A/B Test with Loyalty Membership as one dimension and which ad was previewed before the movie as the second dimension.  The 3 treatments for the ad would be 1) ad targeted using words from Group 1 LDA, 2) ad targeted using words from Group 2 LDA 3) no pre-movie ad.  Every movie ticket would have an included discount for $1 off concessions with a QR code which would be scanned and allow us to determine which pre-movie ad treatment they received. Use of the coupon qualifies you to be counted in the study.  The outcome variable would be the amount spent on concessions.  We would want to analyze the data to determine per transaction average, per showing proportion of people that made a concession purchase, per day aggregate total concession sales, as well as comparing the results of all transactions where a ticket was scanned.

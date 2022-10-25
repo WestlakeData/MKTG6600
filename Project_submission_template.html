@@ -374,6 +374,9 @@ on concessions as the outcome variable since they have learned from
 observation that much of their profit is derived from concession
 sales.</p>
 <p><strong>Regression Analysis</strong></p>
+<pre class="r"><code>#head(data)
+model1&lt;- lm(amount_spent~., data=data)
+summary(model1) # will give output for each level of each categorical predictor</code></pre>
 <pre><code>## 
 ## Call:
 ## lm(formula = amount_spent ~ ., data = data)
@@ -411,6 +414,8 @@ sales.</p>
 ## Residual standard error: 9.662 on 1979 degrees of freedom
 ## Multiple R-squared:  0.6378, Adjusted R-squared:  0.6341 
 ## F-statistic: 174.2 on 20 and 1979 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>#model2 &lt;- aov(amount_spent~., data = data)
+#summary(model2)</code></pre>
 <p>Based upon linear regression analysis, we are able to identify age,
 streaming, days_member and movies_seen as the significant predictors (p
 &lt;0.05) of amount spent on concessions.
@@ -433,6 +438,7 @@ check for multicollinearity.</p>
 <p><em>Multicollinear Analysis</em></p>
 <p>The primary test for mulitcollinearity is to calculate the Variance
 Inflation Factor (VIF) for each independent variable.</p>
+<pre class="r"><code>vif(model1)</code></pre>
 <pre><code>##                 GVIF Df GVIF^(1/(2*Df))
 ## age         1.192316  1        1.091932
 ## job         2.551815 11        1.043502
@@ -442,12 +448,227 @@ Inflation Factor (VIF) for each independent variable.</p>
 ## discount    1.028988  1        1.014390
 ## days_member 1.060568  1        1.029839
 ## movies_seen 1.065285  1        1.032127</code></pre>
+<pre class="r"><code>#vif(modelLM)</code></pre>
 <p>None of the variables display a high degree of multicollinearity (VIF
 &gt; 5). As such, no measures are required to address multicollinearity
 in the model.</p>
-<p><strong>Penalized Regression Analysis</strong></p>
-<p><strong>Predictive model</strong> The analysis was run by splitting
-the data……..</p>
+<div id="strategies-to-increase-concessions-spending" class="section level3">
+<h3>Strategies to increase concessions spending</h3>
+<p>Q3. Given the significant predictors, MovieMagic’s management can ???
+to increase the amount spent on concessions.</p>
+<p>The statistically significant variables and their direction are
+<code>age</code> (higher age means higher sales), quantity of
+<code>streaming</code> subscriptions held by customer (more
+subscriptions means lower sales), <code>days member</code> (veteran
+MovieMagic members spend more on concessions), and
+<code>movies_seen</code> during the last time period (more movies seen
+correlates to higher sales).</p>
+<p>These variables suggest a demographic story about MovieMagic’s most
+profitable customers. The chain’s cash cows are likely middle-aged or
+senior movie buffs who have, for whatever reason, not imitated young
+consumers’ tendency to join multiple on-demand media platforms despite
+the wider movie selection the platforms offer. These customers also
+enjoy MovieMagic’s concessions enough that their consumption engenders
+more consumption — something about the concessions brings the customers
+back again and again as their membership matures.</p>
+<p>In light of this information, management will win by optimizing its
+concessions portfolio, delivery and marketing to defensively retain
+these big-spending customers. It could offer concessions popular among
+older consumers, consider movie-themed product tie-ins in light of the
+segments’ love for cinema, and create on-site advertising about its
+concessions with testimonials from satisfied long-term members to
+incentivize new members to try concessions early in their membership.
+Management should not rule out the use of deeply discounted coupons to
+encourage new members to try the concessions right after joining.
+Although our initial regression on the full data set shows that
+<code>discount:yes</code> has a negative effect on concession sales,
+that result was not statistically significant. Further experimentation
+could prove that a coupon for the right product(s), with the right
+amount of discount, or delivered at a convenient moment (offered
+proactively at the point-of-sale versus by email or post) increases
+spending.</p>
+<p><strong>Offensively</strong>, management can entice new customers by
+digitally advertising to middle-aged or senior consumers who are known
+movie buffs on Facebook — a platform whose users skew older.
+Additionally, management can opt <strong>not</strong> to advertise to
+leads who “like” or follow popular shows that are available exclusively
+on Netflix, Hulu or other streaming platforms, assuming that if they
+like several of those shows, the customers may have subscriptions to
+multiple streaming platforms.</p>
+</div>
+<div id="penalized-regression-analysis" class="section level3">
+<h3>Penalized Regression Analysis</h3>
+<p>One way to address multicollinearity (if we had detected it in our
+model) would be to use a penalized regression.</p>
+<p>Penalized regressions add a regularization parameter to their
+coefficients if two or more predictors appear to be multicollinear while
+the algorithm regresses all predictors against each other. In that case,
+the <strong>regressions carefully add errors or bias to their
+coefficients, assuming the tweaks will decrease variance when the
+regression applied to future samples</strong>.</p>
+<p>Glmnet’s application of the Lasso regression is a powerful penalized
+regression tool and an optimal choice for variable selection. In
+contrast with a Ridge regression, which can penalize or tweak
+coefficients without fully declaring them statistically irrelevant,
+<strong>the Lasso regression can set irrelevant predictors to zero and
+extract meaning from any remaining predictors</strong>, however subtle
+their influence.</p>
+<p>As seen below in MovieMagic’s case, the coefficients of a Lasso
+regression built on all 2,000 observations tell us that we should use
+all the variables available to us to build a model.</p>
+<pre class="r"><code>outcome &lt;- data$amount_spent
+predictors &lt;- data.matrix(data[,c(1:8)])
+
+# Create a Lasso model on all 2,000 observations in the original data set
+lasso_model &lt;- cv.glmnet(x = predictors,
+                         y = outcome, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = &quot;default&quot;)
+
+
+# The coefficients of a Lasso regression on our dataset.
+(lassm1 &lt;- coef(lasso_model, s=&quot;lambda.min&quot;, exact=FALSE))</code></pre>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s1
+## (Intercept)  7.04413093
+## age          0.17571437
+## job          .         
+## streaming   -0.64471312
+## education   -0.04389016
+## seen_alone   0.37653180
+## discount    -0.20979368
+## days_member  0.04932949
+## movies_seen  0.41114300</code></pre>
+<p>None of the variables have been set to 0 (normally expressed as “.”
+when printed by glmnet). This tells us that at that scale of observation
+<strong>even MovieMagic’s statistically insignificant variables have
+some power to predict <code>amount_spent</code></strong>, however small.
+Those predictors don’t have the statistical power to disprove the null
+hypothesis, but Lasso’s failure to eliminate them means that their
+magnitude and direction still add meaning to the model in light of their
+relationship to other predictors.</p>
+</div>
+<div id="avoid-overfitting-with-testtrain-cross-validation" class="section level3">
+<h3>Avoid Overfitting with Test/Train Cross-Validation</h3>
+<p>Using any predictive model risks developing a regression with a
+laser-precise fit to a research sample that performs poorly when used on
+a fresh sample from the population being studied. Analysts walk a
+tightrope between bias and variance — how much precision should be
+sacrificed in the interest of generalizability to future samples from
+the population?</p>
+<p>One way to mitigate that risk is to simulate the transition from the
+training sample to a new sample from the population by pretending that a
+minority percentage of our observations <strong>are</strong> a new
+sample. We call that percentage of observations a “test,” “validation”
+or “hold-out” set. The remaining observations are called the “train” set
+because they’re used to train our algorithm.</p>
+<p>We answer the question of how much precision to sacrifice in the
+interest of generalizibility by making our test set larger or smaller by
+percentage until we find the model with optimal RMSE and R-squared
+values.</p>
+<p>In the case of MovieMagic, we will cross-validate our findings by
+comparing a <strong>80% train / 20% test</strong> and a <strong>70%
+train / 30% test</strong> set.</p>
+<pre class="r"><code>set.seed(1234)
+
+# Create the 70/30 train and test sets
+sample7 &lt;- sample.split(data$amount_spent, SplitRatio = 0.7)
+train7 &lt;- subset(data, sample7 == TRUE)
+test7 &lt;- subset(data, sample7 == FALSE)
+
+# Create the 80/20 train and test sets
+sample8 &lt;- sample.split(data$amount_spent, SplitRatio = 0.8)
+train8 &lt;- subset(data, sample8 == TRUE)
+test8 &lt;- subset(data, sample8 == FALSE)</code></pre>
+<p>As seen below, in the case of the 80/20 split, the information lost
+in the 20% of observations dedicated to the test set means that
+<code>job</code> and <code>education</code> lose their predictive power
+— Lasso has set their influence to zero.</p>
+<p>After an additional 10% of information is lost in the 70/30 split,
+Lasso also eliminates <code>seen_alone</code>. Furthermore,
+<code>streaming</code> keeps the direction of its effect, but loses some
+of its magnitude, falling from -0.78 to -0.39. Discount also loses some
+of its magnitude, falling from -0.33 to -0.13.</p>
+<p>Both sets of revised coefficients suggest that not all variables will
+add predictive power to our regression. We knew from their significance
+levels that many were too statistically insignificant to study as a
+potential lever of action for management, but now we know that two to
+three variables don’t add any predictive power to our model. That said,
+none of the eliminated variables included our statistically significant
+ones — the significant ones will probably still be the main levels of
+action for management — it’s just a question of how large their effect
+will be.</p>
+<pre class="r"><code># Create a Lasso regression on the 80/20 training set
+lasso_model8 &lt;- cv.glmnet(x = data.matrix(train8[,c(1:8)]),
+                         y = train8$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = &quot;default&quot;)
+
+
+# Lasso coefficients of 80% training set
+(lass8coef &lt;- coef(lasso_model8, s=&quot;lambda.min&quot;, exact=FALSE))</code></pre>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s1
+## (Intercept)  6.75326231
+## age          0.18280792
+## job          .         
+## streaming   -0.71148233
+## education   -0.14185655
+## seen_alone   1.27840808
+## discount    -0.57955048
+## days_member  0.04987201
+## movies_seen  0.52694265</code></pre>
+<pre class="r"><code># Create a Lasso regression on the 70/30 training set
+lasso_model7 &lt;- cv.glmnet(x = data.matrix(train7[,c(1:8)]),
+                         y = train7$amount_spent, 
+                         alpha = 1,
+                         standardize = TRUE,
+                         nfolds = 4,
+                         type.measure = &quot;default&quot;)
+
+
+# Lasso coefficients of 70% training set
+(lass7coef &lt;- coef(lasso_model7, s=&quot;lambda.min&quot;, exact=FALSE))</code></pre>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s1
+## (Intercept)  7.17712886
+## age          0.17084982
+## job          .         
+## streaming   -0.44319315
+## education    .         
+## seen_alone   0.15319969
+## discount    -0.29097990
+## days_member  0.04786677
+## movies_seen  0.36371297</code></pre>
+<p>Comparing the RSME, R-squared and MAE values performance of the two
+models below tells us which of the two splits best straddles bias and
+variance. The 80/20 split registers lower RMSE and MAE scores than the
+70/30 split. This means <strong>the 80/20 model is likely to perform
+better on future data sets</strong>, even though it explains less
+variance within its test data compared to the 70/30 model, as evidenced
+by its slightly lower R-squared score.</p>
+<p><!-- Chris and Bryan — this is where I got the interpretation above. It feels risky to use Stack Exchange as a source, but this helped me understand the results a little better than the professor's notes. https://datascience.stackexchange.com/questions/100605/rmse-vs-r-squared --></p>
+<pre class="r"><code># Create a Lasso model based on the 70/30 training set
+model7 &lt;- train(amount_spent ~ ., data = train7, method = &quot;lasso&quot;, na.action=na.exclude)
+predictions7 &lt;-predict(model7, newdata=test7)
+
+# Create a Lasso model based on the 80/20 training set
+model8 &lt;- train(amount_spent ~ ., data = train8, method = &quot;lasso&quot;, na.action=na.exclude)
+predictions8 &lt;-predict(model8, newdata=test8)
+
+
+# 70/30 split - RMSE, Rsquared, and MAE values
+postResample(predictions7, test7$amount_spent)</code></pre>
+<pre><code>##      RMSE  Rsquared       MAE 
+## 10.044226  0.669543  8.035391</code></pre>
+<pre class="r"><code># 80/20 split - RMSE, Rsquared, and MAE values
+postResample(predictions8, test8$amount_spent)</code></pre>
+<pre><code>##      RMSE  Rsquared       MAE 
+## 8.9948022 0.6759327 7.2603958</code></pre>
 <p><strong>Text Analysis</strong></p>
 <p>Question 6 MovieMagic wants to visualize the reviews through a
 wordcloud and wants to find out which words are used most commonly in
@@ -479,18 +700,7 @@ for their customers. A time study could be completed on various nights
 to see the length of time it takes for people to get their food. Once
 that number has been improved messaging to this group could be around
 the improvements in the speed of service. ”</p>
-<pre class="r"><code>#library(tidyverse)
-library(topicmodels)
-#library(ggplot2)
-#library(dplyr)
-#library(tidytext)
-#library(tidyr)
-library(RTextTools)
-library(wordcloud)
-library(tm)
-#library(stringr)
-
-reviews &lt;- read.csv(url(&quot;http://data.mishra.us/files/project_reviews.csv&quot;))
+<pre class="r"><code>reviews &lt;- read.csv(url(&quot;http://data.mishra.us/files/project_reviews.csv&quot;))
 
 #Positive Word Cloud
 
@@ -586,20 +796,7 @@ for three topics was lower then two topics which means three topics was
 better for our LDA model. However, although the perplexity score for
 three topics was better, I would have preferred to keep this at two
 topics since the third topic did not provide any real value.</p>
-<pre class="r"><code>library(reshape2)
-library(tidyverse)
-library(topicmodels)
-library(ggplot2)
-library(dplyr)
-library(tidytext)
-library(tidyr)
-library(RTextTools)
-library(wordcloud)
-library(tm)
-library(stringr)
-
- 
-## Topic model LDA 
+<pre class="r"><code>## Topic model LDA 
 
 reviews_LDA &lt;- read.csv(url(&quot;http://data.mishra.us/files/project_reviews.csv&quot;))
 
@@ -642,7 +839,8 @@ top_terms %&gt;%
 <pre class="r"><code># perplexity calculation - change k = values
 lda &lt;- LDA(LDA_dtm, k = 2, control = NULL) 
 perplexity(lda)</code></pre>
-<pre><code>## [1] 492.4636</code></pre>
+<pre><code>## [1] 496.7719</code></pre>
+</div>
 </div>
 
 
