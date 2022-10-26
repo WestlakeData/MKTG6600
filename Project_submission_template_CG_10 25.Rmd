@@ -368,7 +368,7 @@ strategies that we would suggest focusing on are:
 
 **Negative Reviews:** The three most common words associated with
 negative reviews were are\
-"hour," "food," and "like." The world cloud suggests that the service
+"hour," "food," and "like." The word cloud suggests that the service
 was slow and customers may have waited around an hour to get their food.
 The negative reviews suggest operational rather than marketing concerns.
 Management should audit whether the theater concessions are adequately
